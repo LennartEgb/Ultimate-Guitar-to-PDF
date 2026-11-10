@@ -24,16 +24,15 @@ def init_selenium():
             options.add_argument('--disable-gpu')
             webdriver = driver_class(options=options)
             break
-        except WebDriverException as e:
-            print(f'Error initializing {webdriver.name}: {e}')
+        except WebDriverException:
             continue
 
-    if webdriver:
-        print(f'Successfully initialized {webdriver.name}')
-    else:
-        Exception('Could not find any valid webdriver')
+    if webdriver is None:
+        raise Exception('Could not find any valid webdriver')
 
     return webdriver
+
+
 def fetch_html(url):
     driver = init_selenium()
     driver.get(url)
@@ -41,6 +40,7 @@ def fetch_html(url):
     webpage = driver.page_source
     driver.quit()
     return webpage
+
 
 def get_meta_pre(all_spans):
     text = ''
@@ -50,6 +50,7 @@ def get_meta_pre(all_spans):
         text += span.text
     text += '\n'
     return text
+
 
 def get_meta_post(all_spans):
     last_tab_index = 0
@@ -65,6 +66,7 @@ def get_meta_post(all_spans):
         text += meta_info.text
     return text
 
+
 def extract_tabs(raw_html):
     soup = BeautifulSoup(raw_html, 'html.parser')
 
@@ -72,27 +74,29 @@ def extract_tabs(raw_html):
 
     return pre.text
 
-def convert_to_pdf(filename, text):
-    font = "Courier"
-    fontSize = 10
 
-    pdf_canvas = canvas.Canvas(os.path.join('output', filename + '.pdf'), pagesize=letter)
+def convert_to_pdf(filename, output_dir, text):
+    font = "Courier"
+    font_size = 10
+    output = output_dir if output_dir != "" else "."
+    pdf_canvas = canvas.Canvas(os.path.join(output, filename + '.pdf'), pagesize=letter)
     pdf_width, pdf_height = letter
 
-    pdf_canvas.setFont(font, fontSize)
+    pdf_canvas.setFont(font, font_size)
 
     x, y = 50, pdf_height - 20
 
     for tab in text.split('\n'):
         if y < 200 and tab == f'{chr(32)}{chr(13)}':
             pdf_canvas.showPage()
-            pdf_canvas.setFont(font, fontSize)
+            pdf_canvas.setFont(font, font_size)
             y = pdf_height - 20
 
         pdf_canvas.drawString(x, y, tab.strip())
         y -= 12
 
     pdf_canvas.save()
+
 
 def get_full_url(tab_identifier):
     base_url = 'https://tabs.ultimate-guitar.com/tab/'
