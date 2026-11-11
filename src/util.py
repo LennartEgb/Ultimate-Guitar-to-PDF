@@ -15,6 +15,12 @@ from selenium.webdriver import (
 )
 
 
+class NoValidWebDriver(Exception):
+    def __init__(self):
+        self.message = "No valid WebDriver available"
+        super().__init__(self.message)
+
+
 def init_selenium():
     webdriver = None
 
@@ -35,7 +41,7 @@ def init_selenium():
             continue
 
     if webdriver is None:
-        raise Exception("Could not find any valid webdriver")
+        raise NoValidWebDriver()
 
     return webdriver
 
